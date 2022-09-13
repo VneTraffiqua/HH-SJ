@@ -1,5 +1,4 @@
 import copy
-
 import requests
 import os
 from dotenv import load_dotenv
@@ -7,8 +6,8 @@ from itertools import count
 from terminaltables import AsciiTable
 
 
-def predict_rub_salary(text, area_id=1):
-    salaries = []
+def get_found_vacancies_solary_count(text, area_id=1):
+    solaries = []
     for page in count(0):
         url = 'https://api.hh.ru/vacancies'
         settings = {
@@ -21,12 +20,12 @@ def predict_rub_salary(text, area_id=1):
         vacancies = response.json()['items']
         for vacancy in vacancies:
             try:
-                salaries.append(vacancy['salary']['from'])
+                solaries.append(vacancy['salary']['from'])
             except TypeError:
-                salaries.append(None)
+                solaries.append(None)
         if page >= response.json()['pages'] - 1:
             break
-    filtered_salaries = [solary for solary in salaries if solary is not None]
+    filtered_salaries = [solary for solary in solaries if solary is not None]
     return filtered_salaries, response.json()['found']
 
 
@@ -83,7 +82,9 @@ if __name__ == '__main__':
     table_columns_SJ = copy.deepcopy(table_columns_HH)
     sorted_vacancies_sj_for_language = {}
     for language in languages:
-        salaries, not_processed_vacancies = predict_rub_salary(language)
+        salaries, not_processed_vacancies = get_found_vacancies_solary_count(
+            language
+        )
         if salaries:
             table_columns_HH.append(
                 [
