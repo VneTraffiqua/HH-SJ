@@ -21,7 +21,11 @@ Added to `.env` file:
 
  `SJ_API` -  SuperJob Secret Key
 
-Run `main.py`
+Run `main.py`:
+
+```commandline
+python3 main.py
+```
 ### Project Goals
 
 The code is written for educational purposes on online-course for web-developers [dvmn.org](https://dvmn.org/).
