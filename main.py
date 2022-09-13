@@ -7,7 +7,7 @@ from terminaltables import AsciiTable
 
 
 def get_found_vacancies_solary_count(text, area_id=1):
-    solaries = []
+    salaries = []
     for page in count(0):
         url = 'https://api.hh.ru/vacancies'
         settings = {
@@ -20,12 +20,12 @@ def get_found_vacancies_solary_count(text, area_id=1):
         vacancies = response.json()['items']
         for vacancy in vacancies:
             try:
-                solaries.append(vacancy['salary']['from'])
+                salaries.append(vacancy['salary']['from'])
             except TypeError:
-                solaries.append(None)
+                salaries.append(None)
         if page >= response.json()['pages'] - 1:
             break
-    filtered_salaries = [solary for solary in solaries if solary is not None]
+    filtered_salaries = [solary for solary in salaries if solary]
     return filtered_salaries, response.json()['found']
 
 
