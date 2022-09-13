@@ -17,16 +17,17 @@ def get_found_vacancies_solary_count(text, area_id=1):
         }
         response = requests.get(url, params=settings)
         response.raise_for_status()
-        vacancies = response.json()['items']
+        hh_json = response.json()
+        vacancies = hh_json['items']
         for vacancy in vacancies:
             try:
                 salaries.append(vacancy['salary']['from'])
             except TypeError:
                 salaries.append(None)
-        if page >= response.json()['pages'] - 1:
+        if page >= hh_json['pages'] - 1:
             break
     filtered_salaries = [solary for solary in salaries if solary]
-    return filtered_salaries, response.json()['found']
+    return filtered_salaries, hh_json['found']
 
 
 def all_sj_vacancies_by_id():
