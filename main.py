@@ -21,7 +21,10 @@ def get_found_vacancies_solary_count(text, area_id=1):
         vacancies = hh_json['items']
         for vacancy in vacancies:
             try:
-                salaries.append(vacancy['salary']['from'])
+                if vacancy.get('salary').get('from'):
+                    salaries.append(vacancy['salary']['from'])
+                else:
+                    salaries.append(vacancy['salary']['to'])
             except TypeError:
                 salaries.append(None)
         if page >= hh_json['pages'] - 1:
@@ -107,6 +110,10 @@ if __name__ == '__main__':
             if vacancy.get('payment_from'):
                 vacancies_processed += 1
                 all_solary += vacancy.get('payment_from')
+            else:
+                vacancies_processed += 1
+                all_solary += vacancy.get('payment_to')
+
         table_columns_SJ.append(
             [
                 key, len(value),
