@@ -53,9 +53,7 @@ def get_sj_vacancies_by_category(secret_key):
         vacancies = sj_json.get('objects')
         number_of_vacancies = sj_json.get('total')
         number_of_page = number_of_vacancies // number_of_vacancies_per_page
-        all_vacancies_by_id = []
         for vacancy in vacancies:
-            all_vacancies_by_id.append(vacancy)
             if vacancy.get('payment_from') == 0:
                 vacancy['payment_from'] = None
             yield vacancy
