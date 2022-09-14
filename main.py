@@ -49,8 +49,9 @@ def get_sj_vacancies_by_category(secret_key):
             }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
-        vacancies = response.json().get('objects')
-        number_of_vacancies = response.json().get('total')
+        sj_json = response.json()
+        vacancies = sj_json.get('objects')
+        number_of_vacancies = sj_json.get('total')
         number_of_page = number_of_vacancies // number_of_vacancies_per_page
         all_vacancies_by_id = []
         for vacancy in vacancies:
