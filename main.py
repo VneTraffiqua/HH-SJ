@@ -33,16 +33,16 @@ def get_found_vacancies_solary_count(text, area_id=1):
     return filtered_salaries, hh_json['found']
 
 
-def all_sj_vacancies_by_id():
-    load_dotenv()
+def get_sj_vacancies_by_category(secret_key):
+    number_of_vacancies_per_page = 100
     for page in count(0):
         url = 'https://api.superjob.ru/2.0/vacancies/'
         headers = {
-            'X-Api-App-Id': os.getenv('SJ_API')
+            'X-Api-App-Id': secret_key
         }
 
         params = {
-            'count': 100,
+            'count': number_of_vacancies_per_page,
             'page': page,
             't': '4',
             'catalogues': ['48']
@@ -51,7 +51,7 @@ def all_sj_vacancies_by_id():
         response.raise_for_status()
         vacancies = response.json().get('objects')
         number_of_vacancies = response.json().get('total')
-        number_of_page = number_of_vacancies // 100
+        number_of_page = number_of_vacancies // number_of_vacancies_per_page
         all_vacancies_by_id = []
         for vacancy in vacancies:
             all_vacancies_by_id.append(vacancy)
@@ -63,6 +63,8 @@ def all_sj_vacancies_by_id():
 
 
 if __name__ == '__main__':
+    load_dotenv()
+    sj_secret_key = os.getenv('SJ_API')
     languages = (
         'JavaScript',
         'Java',
@@ -86,20 +88,23 @@ if __name__ == '__main__':
     table_columns_SJ = copy.deepcopy(table_columns_HH)
     sorted_vacancies_sj_for_language = {}
     for language in languages:
-        salaries, not_processed_vacancies = get_found_vacancies_solary_count(
+        salaries, total_vacancies_found = get_found_vacancies_solary_count(
             language
         )
         if salaries:
-            table_columns_HH.append(
-                [
-                    language, not_processed_vacancies,
-                    len(salaries),
-                    int(sum(salaries) / len(salaries))
-                ]
-            )
+            try:
+                table_columns_HH.append(
+                    [
+                        language, total_vacancies_found,
+                        len(salaries),
+                        int(sum(salaries) / len(salaries))
+                    ]
+                )
+            except ZeroDivisionError:
+                continue
 
         sorted_vacancies_sj_for_language[language] = []
-        for vacancy in all_sj_vacancies_by_id():
+        for vacancy in get_sj_vacancies_by_category(sj_secret_key):
             if language in vacancy['profession']:
                 sorted_vacancies_sj_for_language[language].append(vacancy)
 
@@ -114,17 +119,18 @@ if __name__ == '__main__':
                 vacancies_processed += 1
                 all_solary += vacancy.get('payment_to')
 
-        table_columns_SJ.append(
-            [
-                key, len(value),
-                vacancies_processed,
-                (
-                    int(all_solary / vacancies_processed)
-                    if vacancies_processed > 0
-                    else 0
-                    )
-            ]
-        )
+        try:
+            table_columns_SJ.append(
+                [
+                    key, len(value),
+                    vacancies_processed,
+                    (
+                        int(all_solary / vacancies_processed)
+                        )
+                ]
+            )
+        except ZeroDivisionError:
+            table_columns_SJ.append([key, len(value), 0, 0])
 
     print(AsciiTable(table_columns_HH, 'HeadHunter Moscow').table)
     print(AsciiTable(table_columns_SJ, 'SuperJob Moscow').table)
