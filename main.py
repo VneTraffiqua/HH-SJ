@@ -1,19 +1,30 @@
-import copy
 import requests
-import os
-from dotenv import load_dotenv
 from itertools import count
+from dotenv import load_dotenv
+import os
+import copy
 from terminaltables import AsciiTable
 
 
-def get_found_vacancies_solary_count(text, area_id=1):
+def predict_salary(salary_from, salary_to):
+    if salary_from and salary_to:
+        predicted_salary = (salary_from + salary_to) / 2
+    elif salary_from:
+        predicted_salary = salary_from * 1.2
+    else:
+        predicted_salary = salary_to * 0.8
+    return predicted_salary
+
+
+def get_programming_language_info_from_hh(programming_language):
     salaries = []
+    moscow_city_id = 1
     for page in count(0):
         url = 'https://api.hh.ru/vacancies'
         settings = {
             'page': page,
-            'area': area_id,
-            'text': text,
+            'area': moscow_city_id,
+            'text': programming_language,
         }
         response = requests.get(url, params=settings)
         response.raise_for_status()
@@ -21,19 +32,32 @@ def get_found_vacancies_solary_count(text, area_id=1):
         vacancies = hh_json['items']
         for vacancy in vacancies:
             try:
-                if vacancy.get('salary').get('from'):
-                    salaries.append(vacancy['salary']['from'])
+                if vacancy['salary']['currency'] == 'RUR':
+                    salaries.append(
+                        predict_salary(
+                            vacancy['salary']['from'],
+                            vacancy['salary']['to']
+                        )
+                    )
                 else:
-                    salaries.append(vacancy['salary']['to'])
+                    salaries.append(None)
+
             except TypeError:
                 salaries.append(None)
+
         if page >= hh_json['pages'] - 1:
             break
     filtered_salaries = [solary for solary in salaries if solary]
-    return filtered_salaries, hh_json['found']
+    return [
+        programming_language,
+        len(salaries),
+        len(filtered_salaries),
+        int(sum(filtered_salaries) / len(filtered_salaries))
+    ]
 
 
-def get_sj_vacancies_by_category(secret_key):
+def get_programming_language_info_from_sj(programming_language, secret_key):
+    salaries = []
     number_of_vacancies_per_page = 100
     for page in count(0):
         url = 'https://api.superjob.ru/2.0/vacancies/'
@@ -45,20 +69,40 @@ def get_sj_vacancies_by_category(secret_key):
             'count': number_of_vacancies_per_page,
             'page': page,
             't': '4',
-            'catalogues': ['48']
+            'keywords': [[1, 'and', programming_language]],
+            'catalogues': ['48'],
             }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         sj_json = response.json()
         vacancies = sj_json.get('objects')
-        number_of_vacancies = sj_json.get('total')
-        number_of_page = number_of_vacancies // number_of_vacancies_per_page
+        number_of_page = sj_json['total'] // number_of_vacancies_per_page
         for vacancy in vacancies:
-            if vacancy.get('payment_from') == 0:
-                vacancy['payment_from'] = None
-            yield vacancy
-        if page >= number_of_page:
+            payment_from = vacancy['payment_from']
+            payment_to = vacancy['payment_to']
+            if vacancy['payment_from'] == 0:
+                payment_from = None
+            if vacancy['payment_to'] == 0:
+                payment_to = None
+            try:
+                salaries.append(
+                    predict_salary(payment_from, payment_to)
+                )
+            except TypeError:
+                salaries.append(None)
+        if page > number_of_page:
             break
+    filtered_salaries = [salary for salary in salaries if salary]
+    try:
+        average_salary = int(sum(filtered_salaries) / len(filtered_salaries))
+    except ZeroDivisionError:
+        average_salary = 0
+    return [
+        programming_language,
+        len(salaries),
+        len(filtered_salaries),
+        int(average_salary)
+    ]
 
 
 if __name__ == '__main__':
@@ -72,7 +116,6 @@ if __name__ == '__main__':
         'PHP',
         'C++',
         'C#',
-        'TypeScript',
         'Go',
         '1С'
     )
@@ -85,51 +128,13 @@ if __name__ == '__main__':
         ],
     ]
     table_columns_SJ = copy.deepcopy(table_columns_HH)
-    sorted_vacancies_sj_for_language = {}
     for language in languages:
-        salaries, total_vacancies_found = get_found_vacancies_solary_count(
-            language
+        table_columns_HH.append(
+            get_programming_language_info_from_hh(language)
         )
-        if salaries:
-            try:
-                table_columns_HH.append(
-                    [
-                        language, total_vacancies_found,
-                        len(salaries),
-                        int(sum(salaries) / len(salaries))
-                    ]
-                )
-            except ZeroDivisionError:
-                continue
-
-        sorted_vacancies_sj_for_language[language] = []
-        for vacancy in get_sj_vacancies_by_category(sj_secret_key):
-            if language in vacancy['profession']:
-                sorted_vacancies_sj_for_language[language].append(vacancy)
-
-    for key, value in sorted_vacancies_sj_for_language.items():
-        vacancies_processed = 0
-        all_solary = 0
-        for vacancy in value:
-            if vacancy.get('payment_from'):
-                vacancies_processed += 1
-                all_solary += vacancy.get('payment_from')
-            else:
-                vacancies_processed += 1
-                all_solary += vacancy.get('payment_to')
-
-        try:
-            table_columns_SJ.append(
-                [
-                    key, len(value),
-                    vacancies_processed,
-                    (
-                        int(all_solary / vacancies_processed)
-                        )
-                ]
-            )
-        except ZeroDivisionError:
-            table_columns_SJ.append([key, len(value), 0, 0])
-
+        table_columns_SJ.append(
+            get_programming_language_info_from_sj(language, sj_secret_key)
+        )
     print(AsciiTable(table_columns_HH, 'HeadHunter Moscow').table)
     print(AsciiTable(table_columns_SJ, 'SuperJob Moscow').table)
+
