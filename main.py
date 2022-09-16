@@ -28,8 +28,8 @@ def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
         }
         response = requests.get(url, params=settings)
         response.raise_for_status()
-        hh_json = response.json()
-        vacancies = hh_json['items']
+        hh_dict = response.json()
+        vacancies = hh_dict['items']
         for vacancy in vacancies:
             try:
                 if vacancy['salary']['currency'] == 'RUR':
@@ -45,7 +45,7 @@ def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
             except TypeError:
                 salaries.append(None)
 
-        if page >= hh_json['pages'] - 1:
+        if page >= hh_dict['pages'] - 1:
             break
     filtered_salaries = [solary for solary in salaries if solary]
     return [
@@ -62,6 +62,7 @@ def get_prog_language_num_of_vacancies_average_salary_from_sj(
 ):
     salaries = []
     number_of_vacancies_per_page = 100
+    moscow_city_id = 4
     for page in count(0):
         url = 'https://api.superjob.ru/2.0/vacancies/'
         headers = {
@@ -71,21 +72,21 @@ def get_prog_language_num_of_vacancies_average_salary_from_sj(
         params = {
             'count': number_of_vacancies_per_page,
             'page': page,
-            't': '4',
+            't': moscow_city_id,
             'keywords': [[1, 'and', programming_language]],
             'catalogues': ['48'],
             }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
-        sj_json = response.json()
-        vacancies = sj_json.get('objects')
-        number_of_page = sj_json['total'] // number_of_vacancies_per_page
+        sj_dict = response.json()
+        vacancies = sj_dict.get('objects')
+        number_of_page = sj_dict['total'] // number_of_vacancies_per_page
         for vacancy in vacancies:
             payment_from = vacancy['payment_from']
             payment_to = vacancy['payment_to']
-            if vacancy['payment_from'] == 0:
+            if not vacancy['payment_from']:
                 payment_from = None
-            if vacancy['payment_to'] == 0:
+            if not vacancy['payment_to']:
                 payment_to = None
             try:
                 salaries.append(
