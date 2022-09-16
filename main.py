@@ -16,7 +16,7 @@ def predict_salary(salary_from, salary_to):
     return predicted_salary
 
 
-def get_programming_language_info_from_hh(programming_language):
+def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
     salaries = []
     moscow_city_id = 1
     for page in count(0):
@@ -24,7 +24,7 @@ def get_programming_language_info_from_hh(programming_language):
         settings = {
             'page': page,
             'area': moscow_city_id,
-            'text': programming_language,
+            'text': prog_language,
         }
         response = requests.get(url, params=settings)
         response.raise_for_status()
@@ -49,14 +49,17 @@ def get_programming_language_info_from_hh(programming_language):
             break
     filtered_salaries = [solary for solary in salaries if solary]
     return [
-        programming_language,
+        prog_language,
         len(salaries),
         len(filtered_salaries),
         int(sum(filtered_salaries) / len(filtered_salaries))
     ]
 
 
-def get_programming_language_info_from_sj(programming_language, secret_key):
+def get_prog_language_num_of_vacancies_average_salary_from_sj(
+        programming_language,
+        secret_key
+):
     salaries = []
     number_of_vacancies_per_page = 100
     for page in count(0):
@@ -130,11 +133,12 @@ if __name__ == '__main__':
     table_columns_SJ = copy.deepcopy(table_columns_HH)
     for language in languages:
         table_columns_HH.append(
-            get_programming_language_info_from_hh(language)
+            get_prog_language_num_of_vacancies_average_salary_from_hh(language)
         )
         table_columns_SJ.append(
-            get_programming_language_info_from_sj(language, sj_secret_key)
+            get_prog_language_num_of_vacancies_average_salary_from_sj(
+                language, sj_secret_key
+            )
         )
     print(AsciiTable(table_columns_HH, 'HeadHunter Moscow').table)
     print(AsciiTable(table_columns_SJ, 'SuperJob Moscow').table)
-
