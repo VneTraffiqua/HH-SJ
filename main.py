@@ -16,7 +16,7 @@ def predict_salary(salary_from, salary_to):
     return predicted_salary
 
 
-def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
+def get_language_statistics_hh(prog_language):
     salaries = []
     moscow_city_id = 1
     for page in count(0):
@@ -56,7 +56,7 @@ def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
     ]
 
 
-def get_prog_language_num_of_vacancies_average_salary_from_sj(
+def get_language_statistics_sj(
         programming_language,
         secret_key
 ):
@@ -130,10 +130,10 @@ if __name__ == '__main__':
     table_columns_SJ = copy.deepcopy(table_columns_HH)
     for language in languages:
         table_columns_HH.append(
-            get_prog_language_num_of_vacancies_average_salary_from_hh(language)
+            get_language_statistics_hh(language)
         )
         table_columns_SJ.append(
-            get_prog_language_num_of_vacancies_average_salary_from_sj(
+            get_language_statistics_sj(
                 language, sj_secret_key
             )
         )
