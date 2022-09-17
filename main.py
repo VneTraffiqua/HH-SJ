@@ -67,6 +67,8 @@ def get_language_statistics_sj(
     salaries = []
     number_of_vacancies_per_page = 100
     moscow_city_id = 4
+    block_position_id = 1
+    programmer_category_id = '48'
     for page in count(0):
         url = 'https://api.superjob.ru/2.0/vacancies/'
         headers = {
@@ -77,8 +79,10 @@ def get_language_statistics_sj(
             'count': number_of_vacancies_per_page,
             'page': page,
             't': moscow_city_id,
-            'keywords': [[1, 'and', programming_language]],
-            'catalogues': ['48'],
+            'keywords': [
+                [block_position_id, 'and', programming_language]
+            ],
+            'catalogues': [programmer_category_id, ],
             }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
