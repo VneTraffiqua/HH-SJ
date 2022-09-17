@@ -84,10 +84,6 @@ def get_prog_language_num_of_vacancies_average_salary_from_sj(
         for vacancy in vacancies:
             payment_from = vacancy['payment_from']
             payment_to = vacancy['payment_to']
-            if not vacancy['payment_from']:
-                payment_from = None
-            if not vacancy['payment_to']:
-                payment_to = None
             try:
                 salaries.append(
                     predict_salary(payment_from, payment_to)
