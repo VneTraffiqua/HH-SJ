@@ -28,8 +28,8 @@ def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
         }
         response = requests.get(url, params=settings)
         response.raise_for_status()
-        hh_dict = response.json()
-        vacancies = hh_dict['items']
+        hh_vacancies = response.json()
+        vacancies = hh_vacancies['items']
         for vacancy in vacancies:
             try:
                 if vacancy['salary']['currency'] == 'RUR':
@@ -45,7 +45,7 @@ def get_prog_language_num_of_vacancies_average_salary_from_hh(prog_language):
             except TypeError:
                 salaries.append(None)
 
-        if page >= hh_dict['pages'] - 1:
+        if page >= hh_vacancies['pages'] - 1:
             break
     filtered_salaries = [solary for solary in salaries if solary]
     return [
@@ -78,9 +78,9 @@ def get_prog_language_num_of_vacancies_average_salary_from_sj(
             }
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
-        sj_dict = response.json()
-        vacancies = sj_dict.get('objects')
-        number_of_page = sj_dict['total'] // number_of_vacancies_per_page
+        sj_vacancies = response.json()
+        vacancies = sj_vacancies.get('objects')
+        number_of_page = sj_vacancies['total'] // number_of_vacancies_per_page
         for vacancy in vacancies:
             payment_from = vacancy['payment_from']
             payment_to = vacancy['payment_to']
