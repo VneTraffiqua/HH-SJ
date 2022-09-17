@@ -48,11 +48,15 @@ def get_language_statistics_hh(prog_language):
         if page >= hh_vacancies['pages'] - 1:
             break
     filtered_salaries = [solary for solary in salaries if solary]
+    try:
+        average_salary = int(sum(filtered_salaries) / len(filtered_salaries))
+    except ZeroDivisionError:
+        average_salary = 0
     return [
         prog_language,
         len(salaries),
         len(filtered_salaries),
-        int(sum(filtered_salaries) / len(filtered_salaries))
+        average_salary
     ]
 
 
